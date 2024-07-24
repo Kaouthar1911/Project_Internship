@@ -131,8 +131,8 @@ class ChatbotEngine:
 
         return str(response)
 
-    def reset(self):
-        self.memory.clear()
+    # def reset(self):
+    #     self.memory.clear()
 
 
 
@@ -336,16 +336,19 @@ class ChatbotInterface:
                 break
 
     def chat_loop(self):
-        print("Conversation commencée. Tapez 'exit' pour terminer, 'update' pour intégrer de nouvelles données, ou 'admin' pour le menu administrateur.")
+        print("\nNouvelle conversation commencée. Tapez 'exit' pour terminer cette conversation, 'update' pour intégrer de nouvelles données, ou 'admin' pour le menu administrateur.")
         while True:
             user_input = input("Utilisateur: ")
             if user_input.lower() == 'exit':
-                self.chatbot_engine.reset()  # Utiliser la méthode reset du ChatbotEngine
+                print("Conversation terminée.")
                 break
             elif user_input.lower() == 'update':
                 self.update_data()
             elif user_input.lower() == 'admin':
                 self.admin_interface.admin_menu()
+            elif user_input.lower() == 'quit':
+                print("Fermeture du programme.")
+                exit()
             else:
                 response = self.chatbot_engine.chat(user_input)
                 print(f"AI: {response}")
