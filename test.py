@@ -20,6 +20,7 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response_synthesizers import get_response_synthesizer
 from llama_index.core.prompts import PromptTemplate
 
+
 class Config:
     PERSIST_DIR = "./stocker"
     EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
@@ -80,11 +81,10 @@ class PromptManager:
 from typing import List
 
 class ChatbotEngine:
-    def __init__(self, index_manager: IndexManager, debug=False):
+    def __init__(self, index_manager: IndexManager):
         self.index_manager = index_manager
         self.memory = ChatMemoryBuffer.from_defaults(token_limit=3900)
         self.chat_engine = self.initialize_chat_engine()
-        self.debug = debug
 
     def initialize_chat_engine(self):
         retriever = VectorIndexRetriever(
@@ -110,30 +110,53 @@ class ChatbotEngine:
 
         return query_engine
 
-
-
-
     def chat(self, user_input: str) -> str:
-        if self.debug:
-            # Récupérer les résultats du retriever
-            retriever_results = self.chat_engine.retriever.retrieve(user_input)
-            print("\nDEBUG: Résultats du retriever:")
-            for i, node in enumerate(retriever_results):
-                print(f"Node {i+1}:")
-                print(f"Source: {node.node.metadata.get('file_name', 'Unknown')}")
-                print(f"Content: {node.node.text}")  # Afficher les 200 premiers caractères
-                print(f"Score: {node.score}")
-                print("-" * 50)
+        # Ajouter le message de l'utilisateur à la mémoire
+        self.memory.put(ChatMessage(role=MessageRole.USER, content=user_input))
 
-        response = self.chat_engine.query(user_input)
-        
-        if self.debug:
-            print("\nDEBUG: Contexte envoyé au LLM:")
-            print(response.source_nodes)
-            print("\nDEBUG: Réponse complète:")
-            print(response)
+        # Récupérer l'historique de la conversation
+        chat_history = self.memory.get()
+
+        # Créer une requête augmentée avec l'historique
+        augmented_query = f"Chat history:\n"
+        for msg in chat_history:
+            augmented_query += f"{msg.role}: {msg.content}\n"
+        augmented_query += f"\nNew question: {user_input}"
+
+        # Obtenir la réponse
+        response = self.chat_engine.query(augmented_query)
+
+        # Ajouter la réponse à la mémoire
+        self.memory.put(ChatMessage(role=MessageRole.ASSISTANT, content=str(response)))
 
         return str(response)
+
+    def reset(self):
+        self.memory.clear()
+
+
+
+
+    # def chat(self, user_input: str) -> str:
+    #     if self.debug:
+    #         # Récupérer les résultats du retriever
+    #         retriever_results = self.chat_engine.retriever.retrieve(user_input)
+    #         print("\nDEBUG: Résultats du retriever:")
+    #         for i, node in enumerate(retriever_results):
+    #             print(f"Node {i+1}:")
+    #             print(f"Source: {node.node.metadata.get('file_name', 'Unknown')}")
+    #             print(f"Content: {node.node.text}")  # Afficher les 200 premiers caractères
+    #             print(f"Score: {node.score}")
+    #             print("-" * 50)
+
+    #     response = self.chat_engine.query(user_input)
+        
+    #     if self.debug:
+    #         print("\nDEBUG: Contexte envoyé au LLM:")
+    #         print(response.source_nodes)
+    #         print("\nDEBUG: Réponse complète:")
+
+    #     return str(response)
     # def chat(self, user_input: str) -> str:
     #     # Ajouter le message de l'utilisateur à la mémoire
     #     self.memory.put(ChatMessage(role=MessageRole.USER, content=user_input))
@@ -155,8 +178,8 @@ class ChatbotEngine:
 
     #     return str(response)
 
-    def reset(self):
-        self.memory.clear()
+    # def reset(self):
+    #     self.memory.clear()
 
 class RealTimeDataIntegrator:
     def __init__(self, index_manager: IndexManager):
@@ -313,19 +336,16 @@ class ChatbotInterface:
                 break
 
     def chat_loop(self):
-        print("\nNouvelle conversation commencée. Tapez 'exit' pour terminer cette conversation, 'update' pour intégrer de nouvelles données, ou 'admin' pour le menu administrateur.")
+        print("Conversation commencée. Tapez 'exit' pour terminer, 'update' pour intégrer de nouvelles données, ou 'admin' pour le menu administrateur.")
         while True:
             user_input = input("Utilisateur: ")
             if user_input.lower() == 'exit':
-                print("Conversation terminée.")
+                self.chatbot_engine.reset()  # Utiliser la méthode reset du ChatbotEngine
                 break
             elif user_input.lower() == 'update':
                 self.update_data()
             elif user_input.lower() == 'admin':
                 self.admin_interface.admin_menu()
-            elif user_input.lower() == 'quit':
-                print("Fermeture du programme.")
-                exit()
             else:
                 response = self.chatbot_engine.chat(user_input)
                 print(f"AI: {response}")
@@ -339,7 +359,7 @@ class ChatbotInterface:
 def main():
     model_manager = ModelManager()
     index_manager = IndexManager(model_manager)
-    chatbot_engine = ChatbotEngine(index_manager, debug=True)  
+    chatbot_engine = ChatbotEngine(index_manager)  
     data_integrator = RealTimeDataIntegrator(index_manager)
     admin_interface = AdminInterface(index_manager, data_integrator)
     interface = ChatbotInterface(chatbot_engine, data_integrator, admin_interface)
