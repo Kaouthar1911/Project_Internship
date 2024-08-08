@@ -40,7 +40,7 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response_synthesizers import get_response_synthesizer
 
 class Config:
-    PERSIST_DIR = "./stock"
+    PERSIST_DIR = "./st"
     EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
     LLM_MODEL = "llama3-70b-8192"
     CHUNK_SIZE = 800

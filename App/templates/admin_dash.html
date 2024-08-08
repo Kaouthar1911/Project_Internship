@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <h2>Documents</h2>
+    <ul>
+    {% for doc in documents %}
+        <li>{{ doc }}</li>
+    {% endfor %}
+    </ul>
+    <h2>Add Document</h2>
+    <form id="addDocumentForm">
+        <input type="text" name="file_path" placeholder="File path" required>
+        <button type="submit">Add Document</button>
+    </form>
+    <h2>Update Document</h2>
+    <form id="updateDocumentForm">
+        <input type="text" name="filename" placeholder="Filename" required>
+        <textarea name="new_content" placeholder="New content" required></textarea>
+        <button type="submit">Update Document</button>
+    </form>
+    <h2>Delete Document</h2>
+    <form id="deleteDocumentForm">
+        <input type="text" name="filename" placeholder="Filename" required>
+        <button type="submit">Delete Document</button>
+    </form>
+    <script>
+        // Add JavaScript to handle form submissions via AJAX
+    </script>
+</body>
+</html>

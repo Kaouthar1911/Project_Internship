@@ -100,7 +100,7 @@ class ChatbotEngine:
     def initialize_chat_engine(self):
         retriever = VectorIndexRetriever(
             index=self.index_manager.index,
-            similarity_top_k=1,
+            similarity_top_k=25,
         )
 
         prompt_template = PromptManager.get_prompt_template()
